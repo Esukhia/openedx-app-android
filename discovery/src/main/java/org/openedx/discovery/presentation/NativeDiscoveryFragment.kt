@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,18 +17,18 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -53,6 +54,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -237,20 +239,37 @@ internal fun DiscoveryScreen(
     var showOrganizationFilter by rememberSaveable {
         mutableStateOf(false)
     }
+    var isOrganizationFilterContentReady by remember {
+        mutableStateOf(false)
+    }
     var isInternetConnectionShown by rememberSaveable {
         mutableStateOf(false)
     }
 
     if (showOrganizationFilter) {
         ModalBottomSheet(
-            onDismissRequest = { showOrganizationFilter = false },
-            sheetState = bottomSheetState
+            onDismissRequest = {
+                isOrganizationFilterContentReady = false
+                showOrganizationFilter = false
+            },
+            sheetState = bottomSheetState,
+            shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+            containerColor = MaterialTheme.appColors.background,
+            dragHandle = null
         ) {
+            LaunchedEffect(Unit) {
+                withFrameNanos { }
+                isOrganizationFilterContentReady = true
+            }
+
             OrganizationFilterBottomSheet(
-                orgList = organizations,
-                isLoading = false,
+                orgList = if (isOrganizationFilterContentReady) organizations else emptyList(),
+                isLoading = !isOrganizationFilterContentReady,
                 selectedOrg = selectedOrganization,
-                onClose = { showOrganizationFilter = false },
+                onClose = {
+                    isOrganizationFilterContentReady = false
+                    showOrganizationFilter = false
+                },
                 onOrgSelected = { organization ->
                     onOrganizationSelected(
                         if (organization.organization == "all") null else organization
@@ -378,6 +397,7 @@ internal fun DiscoveryScreen(
 
                     IconButton(
                         onClick = {
+                            isOrganizationFilterContentReady = false
                             showOrganizationFilter = true
                         }
                     ) {
@@ -390,43 +410,57 @@ internal fun DiscoveryScreen(
                     }
                 }
                 selectedOrganization?.let { selectedOrg ->
-                    Surface(
+                    Row(
                         modifier = Modifier
                             .padding(horizontal = 24.dp, vertical = 8.dp)
                             .then(searchTabWidth),
-                        shape = RoundedCornerShape(20.dp),
-                        color = MaterialTheme.appColors.primary,
-                        border = BorderStroke(1.dp, MaterialTheme.appColors.primary),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
+                        Surface(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(start = 16.dp, end = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                                .wrapContentWidth()
+                                .heightIn(min = 40.dp),
+                            shape = RoundedCornerShape(20.dp),
+                            color = MaterialTheme.appColors.primary,
+                            border = BorderStroke(1.dp, MaterialTheme.appColors.primary),
+                            shadowElevation = 2.dp,
                         ) {
-                            Text(
+                            Row(
                                 modifier = Modifier
-                                    .weight(1f)
-                                    .padding(vertical = 8.dp),
-                                text = selectedOrg.name,
-                                color = MaterialTheme.appColors.surface,
-                                style = MaterialTheme.appTypography.labelMedium.copy(
-                                    fontWeight = FontWeight.Bold
-                                ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            IconButton(
-                                modifier = Modifier.size(36.dp),
-                                onClick = {
-                                    onOrganizationSelected(null)
-                                }
+                                    .padding(start = 16.dp, end = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = stringResource(id = R.string.filter_courses),
-                                    tint = MaterialTheme.appColors.surface,
-                                    modifier = Modifier.size(20.dp)
+                                Text(
+                                    modifier = Modifier.padding(vertical = 8.dp),
+                                    text = selectedOrg.organization,
+                                    color = MaterialTheme.appColors.surface,
+                                    style = MaterialTheme.appTypography.labelMedium.copy(
+                                        fontWeight = FontWeight.Bold
+                                    ),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                        }
+
+                        Surface(
+                            modifier = Modifier
+                                .wrapContentWidth()
+                                .heightIn(min = 40.dp)
+                                .clickable { onOrganizationSelected(null) },
+                            shape = RoundedCornerShape(20.dp),
+                            color = MaterialTheme.appColors.surface,
+                            border = BorderStroke(1.dp, MaterialTheme.appColors.textFieldBorder),
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = stringResource(id = R.string.clear),
+                                    color = MaterialTheme.appColors.textFieldHint,
+                                    style = MaterialTheme.appTypography.labelMedium
                                 )
                             }
                         }
