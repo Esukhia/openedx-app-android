@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -92,15 +93,6 @@ fun DiscoveryCourseItem(
     windowSize: WindowSize,
     onClick: (String) -> Unit,
 ) {
-    val imageWidth by remember(key1 = windowSize) {
-        mutableStateOf(
-            windowSize.windowSizeValue(
-                expanded = 170.dp,
-                compact = 105.dp
-            )
-        )
-    }
-
     // Workaround: Tibetan script line wrapping issue in Jetpack Compose.
     // Adding a trailing newline forces proper height calculation and prevents clipping.
     val adjustedCourseTitle = course.name + "\n"
@@ -111,20 +103,22 @@ fun DiscoveryCourseItem(
         stringResource(id = R.string.discovery_course_duration_specified, course.duration)
     }
 
+    val lineHeight = 22.dp
+
     Surface(
         modifier = Modifier
             .testTag("btn_course_card")
             .fillMaxWidth()
-            .height(140.dp)
-            .clickable { onClick(course.courseId) }
-            .background(MaterialTheme.appColors.background),
+            .height(230.dp)
+            .clickable { onClick(course.courseId) },
+        shape = MaterialTheme.appShapes.cardShape,
+        shadowElevation = 4.dp,
+        color = MaterialTheme.appColors.surface
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.appColors.background),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
@@ -135,39 +129,41 @@ fun DiscoveryCourseItem(
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .width(imageWidth)
+                    .fillMaxWidth()
                     .height(105.dp)
                     .clip(MaterialTheme.appShapes.courseImageShape)
             )
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(105.dp),
+                    .padding(10.dp)
             ) {
                 Text(
-                    modifier = Modifier
-                        .testTag("txt_course_org")
-                        .padding(top = 12.dp),
+                    modifier = Modifier.testTag("txt_course_org"),
                     text = course.org,
                     color = MaterialTheme.appColors.textFieldHint,
-                    style = MaterialTheme.appTypography.labelMedium
+                    style = MaterialTheme.appTypography.labelMedium,
+                    maxLines = 1,
+                    softWrap = true,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     modifier = Modifier
                         .testTag("txt_course_title")
                         .fillMaxWidth()
-                        .padding(top = 8.dp),
+                        .padding(top = 4.dp)
+                        .height(lineHeight * 3),
                     text = adjustedCourseTitle,
                     color = MaterialTheme.appColors.textPrimary,
                     style = MaterialTheme.appTypography.titleSmall,
-                    maxLines = 2,
+                    maxLines = 3,
                     softWrap = true,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 8.dp)
+                        .padding(top = 4.dp)
                         .testTag("txt_course_duration"),
                     text = durationText,
                     color = MaterialTheme.appColors.textFieldHint,

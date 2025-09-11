@@ -26,12 +26,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -229,7 +229,7 @@ internal fun DiscoveryScreen(
     selectedOrganization: Organization?,
     onOrganizationSelected: (Organization?) -> Unit,
 ) {
-    val scrollState = rememberLazyListState()
+    val scrollState = rememberLazyGridState()
     val firstVisibleIndex = remember {
         mutableIntStateOf(scrollState.firstVisibleItemIndex)
     }
@@ -493,14 +493,17 @@ internal fun DiscoveryScreen(
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
                             ) {
-                                LazyColumn(
-                                    Modifier
+                                LazyVerticalGrid(
+                                    columns = GridCells.Fixed(2),
+                                    modifier = Modifier
                                         .fillMaxHeight()
                                         .then(contentWidth),
                                     contentPadding = contentPaddings,
-                                    state = scrollState
+                                    state = scrollState,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
-                                    item {
+                                    item(span = { GridItemSpan(2) }) {
                                         Column {
                                             if (selectedOrganization != null) {
                                                 Text(
@@ -510,7 +513,7 @@ internal fun DiscoveryScreen(
                                                         state.numCourses
                                                     ),
                                                     color = MaterialTheme.appColors.textPrimary,
-                                                    style = MaterialTheme.appTypography.titleMedium
+                                                    style = MaterialTheme.appTypography.titleLarge
                                                 )
                                             } else {
                                                 Text(
@@ -531,18 +534,19 @@ internal fun DiscoveryScreen(
                                             Spacer(modifier = Modifier.height(14.dp))
                                         }
                                     }
-                                    items(state.courses) { course ->
+                                    items(
+                                        count = state.courses.size,
+                                        key = { index -> "${state.courses[index].courseId}_$index" }
+                                    ) { index ->
+                                        val course = state.courses[index]
                                         DiscoveryCourseItem(
                                             apiHostUrl = apiHostUrl,
                                             course = course,
                                             windowSize = windowSize,
-                                            onClick = {
-                                                onItemClick(course)
-                                            }
+                                            onClick = { onItemClick(course) }
                                         )
-                                        HorizontalDivider()
                                     }
-                                    item {
+                                    item(span = { GridItemSpan(2) }) {
                                         if (canLoadMore) {
                                             Box(
                                                 modifier = Modifier
