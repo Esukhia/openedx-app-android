@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -32,6 +33,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -103,13 +105,13 @@ fun DiscoveryCourseItem(
         stringResource(id = R.string.discovery_course_duration_specified, course.duration)
     }
 
-    val lineHeight = 22.dp
+    val lineHeightSp = MaterialTheme.appTypography.titleSmall.lineHeight
+    val lineHeight = with(LocalDensity.current) { lineHeightSp.toDp() + 5.dp }
 
     Surface(
         modifier = Modifier
             .testTag("btn_course_card")
             .fillMaxWidth()
-            .height(230.dp)
             .clickable { onClick(course.courseId) },
         shape = MaterialTheme.appShapes.cardShape,
         shadowElevation = 4.dp,
@@ -130,7 +132,7 @@ fun DiscoveryCourseItem(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(105.dp)
+                    .aspectRatio(16f / 9f) // image scales with width
                     .clip(MaterialTheme.appShapes.courseImageShape)
             )
             Column(

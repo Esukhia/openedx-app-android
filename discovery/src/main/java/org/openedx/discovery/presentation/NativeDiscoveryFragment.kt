@@ -337,6 +337,12 @@ internal fun DiscoveryScreen(
             )
         }
 
+        val columns = if (windowSize.width == WindowType.Compact) {
+            GridCells.Fixed(2)
+        } else {
+            GridCells.Fixed(3)
+        }
+
         HandleUIMessage(uiMessage = uiMessage, snackbarHostState = snackbarHostState)
 
         if (canShowBackButton) {
@@ -494,7 +500,7 @@ internal fun DiscoveryScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 LazyVerticalGrid(
-                                    columns = GridCells.Fixed(2),
+                                    columns = columns,
                                     modifier = Modifier
                                         .fillMaxHeight()
                                         .then(contentWidth),
@@ -503,7 +509,7 @@ internal fun DiscoveryScreen(
                                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                                     verticalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
-                                    item(span = { GridItemSpan(2) }) {
+                                    item(span = { GridItemSpan(maxLineSpan) }) {
                                         Column {
                                             if (selectedOrganization != null) {
                                                 Text(
@@ -546,7 +552,7 @@ internal fun DiscoveryScreen(
                                             onClick = { onItemClick(course) }
                                         )
                                     }
-                                    item(span = { GridItemSpan(2) }) {
+                                    item(span = { GridItemSpan(maxLineSpan) }) {
                                         if (canLoadMore) {
                                             Box(
                                                 modifier = Modifier
