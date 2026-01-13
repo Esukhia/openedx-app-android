@@ -21,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -34,6 +35,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
+import org.openedx.core.extension.loadUrl
+import org.openedx.core.system.AppCookieManager
 import org.openedx.core.ui.theme.appColors
 import org.openedx.core.ui.theme.getDarkThemeFromPreferences
 import org.openedx.core.utils.EmailUtil
@@ -53,6 +56,9 @@ fun WebContentScreen(
     onBackClick: () -> Unit,
     htmlBody: String? = null,
     contentUrl: String? = null,
+    hideHeaderFooter: Boolean = true,
+    cookieManager: AppCookieManager? = null,
+    openHttpLinksExternally: Boolean = true,
 ) {
     Scaffold(
         modifier = Modifier
@@ -110,6 +116,9 @@ fun WebContentScreen(
                                 apiHostUrl = apiHostUrl,
                                 body = htmlBody,
                                 contentUrl = contentUrl,
+                                hideHeaderFooter = hideHeaderFooter,
+                                cookieManager = cookieManager,
+                                openHttpLinksExternally = openHttpLinksExternally,
                                 onWebPageLoaded = {
                                     webViewAlpha = 1f
                                 }
@@ -128,10 +137,23 @@ private fun WebViewContent(
     apiHostUrl: String? = null,
     body: String? = null,
     contentUrl: String? = null,
+    hideHeaderFooter: Boolean = true,
+    cookieManager: AppCookieManager? = null,
+    openHttpLinksExternally: Boolean = true,
     onWebPageLoaded: () -> Unit
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val isDarkTheme = getDarkThemeFromPreferences()
+
+    fun WebView.loadContentUrl(url: String) {
+        if (cookieManager == null) {
+            loadUrl(url)
+        } else {
+            loadUrl(url, coroutineScope, cookieManager)
+        }
+    }
+
     AndroidView(
         factory = {
             WebView(context).apply {
@@ -146,7 +168,11 @@ private fun WebViewContent(
                         request: WebResourceRequest?
                     ): Boolean {
                         val clickUrl = request?.url?.toString() ?: ""
-                        return if (clickUrl.isNotEmpty() && clickUrl.startsWith("http")) {
+                        return if (
+                            openHttpLinksExternally &&
+                            clickUrl.isNotEmpty() &&
+                            clickUrl.startsWith("http")
+                        ) {
                             context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(clickUrl)))
                             true
                         } else if (clickUrl.startsWith("mailto:")) {
@@ -164,6 +190,7 @@ private fun WebViewContent(
 
                     override fun onPageFinished(view: WebView?, url: String?) {
                         super.onPageFinished(view, url)
+                        if (!hideHeaderFooter) return
                         val css = when {
                             url?.contains("privacy", ignoreCase = true) == true -> PRIVACY_PAGE_CSS
                             else -> return
@@ -191,7 +218,7 @@ private fun WebViewContent(
                     )
                 }
                 contentUrl?.let {
-                    loadUrl(it)
+                    loadContentUrl(it)
                 }
                 applyDarkModeIfEnabled(isDarkTheme)
             }
@@ -207,7 +234,7 @@ private fun WebViewContent(
                 )
             }
             contentUrl?.let {
-                webView.loadUrl(it)
+                webView.loadContentUrl(it)
             }
         }
     )

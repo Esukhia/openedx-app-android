@@ -39,7 +39,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.AndroidUriHandler
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -66,7 +65,6 @@ import org.openedx.course.presentation.container.CourseContentTab
 import org.openedx.course.presentation.ui.CourseMessage
 import org.openedx.course.presentation.ui.ResumeCourseButton
 import org.openedx.course.presentation.unit.container.CourseViewMode
-import org.openedx.foundation.extension.takeIfNotEmpty
 import org.openedx.foundation.presentation.UIMessage
 import org.openedx.foundation.presentation.WindowSize
 import org.openedx.foundation.presentation.WindowType
@@ -134,10 +132,8 @@ fun CourseHomeScreen(
                 fragmentManager = fragmentManager,
             )
         },
-        onCertificateClick = {
-            viewModel.viewCertificateTappedEvent()
-            it.takeIfNotEmpty()
-                ?.let { url -> AndroidUriHandler(context).openUri(url) }
+        onCertificateClick = { url ->
+            viewModel.navigateToCertificate(fragmentManager, url)
         },
         onVideoClick = { videoBlock ->
             viewModel.courseRouter.navigateToCourseContainer(
