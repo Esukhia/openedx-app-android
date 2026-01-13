@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
+import org.openedx.core.extension.injectHeaderFooterHidingCss
 import org.openedx.core.extension.loadUrl
 import org.openedx.core.system.AppCookieManager
 import org.openedx.core.ui.theme.appColors
@@ -190,12 +191,12 @@ private fun WebViewContent(
 
                     override fun onPageFinished(view: WebView?, url: String?) {
                         super.onPageFinished(view, url)
-                        if (!hideHeaderFooter) return
-                        val css = when {
-                            url?.contains("privacy", ignoreCase = true) == true -> PRIVACY_PAGE_CSS
-                            else -> return
+                        if (hideHeaderFooter) {
+                            if (url?.contains("privacy", ignoreCase = true) == true) {
+                                injectCss(view, PRIVACY_PAGE_ADDITIONAL_CSS)
+                            }
+                            view?.injectHeaderFooterHidingCss()
                         }
-                        injectCss(view, css)
                     }
                 }
                 with(settings) {
@@ -240,14 +241,7 @@ private fun WebViewContent(
     )
 }
 
-private const val PRIVACY_PAGE_CSS = """
-    header, footer {
-        display: none !important;
-    }
-    body {
-        margin-top: 0 !important;
-        padding-top: 0 !important;
-    }
+private const val PRIVACY_PAGE_ADDITIONAL_CSS = """
     .content-wrapper {
         padding: 0 !important;
         margin: 0;
