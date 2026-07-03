@@ -27,7 +27,7 @@ fun PageIndicator(
     numberOfPages: Int,
     modifier: Modifier = Modifier,
     selectedPage: Int = 0,
-    selectedColor: Color = MaterialTheme.appColors.info,
+    selectedColor: Color = MaterialTheme.appColors.primary,
     previousUnselectedColor: Color = MaterialTheme.appColors.cardViewBorder,
     nextUnselectedColor: Color = MaterialTheme.appColors.textFieldBorder,
     defaultRadius: Dp = 20.dp,

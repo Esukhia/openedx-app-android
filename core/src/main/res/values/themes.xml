@@ -3,7 +3,9 @@
     <style name="Theme.OpenEdX" parent="Theme.Material3.DayNight">
         <!-- Primary brand color. -->
         <item name="colorPrimary">@color/primary</item>
-<!--        <item name="colorPrimaryVariant">@color/primaryVariant</item>-->
+        <item name="colorPrimaryVariant">@color/primary</item>
+        <item name="colorAccent">@color/primary</item>
+        <item name="android:colorAccent">@color/primary</item>
 <!--        <item name="colorOnPrimary">@color/white</item>-->
 <!--        &lt;!&ndash; Secondary brand color. &ndash;&gt;-->
 <!--        <item name="colorSecondary">@color/secondary</item>-->

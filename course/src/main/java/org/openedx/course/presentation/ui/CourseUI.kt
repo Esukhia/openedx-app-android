@@ -1261,7 +1261,7 @@ fun SubSectionUnitsList(
             .fillMaxWidth()
             .wrapContentHeight(align = Alignment.Top)
             .displayCutoutForLandscape(),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
+        border = BorderStroke(1.dp, MaterialTheme.appColors.cardViewBorder)
     ) {
         LazyColumn(Modifier.fillMaxWidth()) {
             itemsIndexed(unitBlocks) { index, unit ->
