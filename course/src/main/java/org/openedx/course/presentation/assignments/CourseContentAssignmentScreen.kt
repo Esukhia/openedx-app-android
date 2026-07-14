@@ -57,6 +57,8 @@ import androidx.fragment.app.FragmentManager
 import org.openedx.core.CoreMocks
 import org.openedx.core.domain.model.Block
 import org.openedx.core.domain.model.Progress
+import org.openedx.core.domain.model.assignmentCompletion
+import org.openedx.core.domain.model.isAssignmentCompleted
 import org.openedx.core.ui.theme.OpenEdXTheme
 import org.openedx.core.ui.theme.appColors
 import org.openedx.core.ui.theme.appShapes
@@ -185,6 +187,7 @@ private fun CourseContentAssignmentScreen(
                                 gradeColor = gradeColor,
                                 assignments = blocks,
                                 sectionNames = uiState.sectionNames,
+                                allBlocks = uiState.allBlocks,
                                 onAssignmentClick = onAssignmentClick,
                             )
                         }
@@ -202,18 +205,19 @@ private fun AssignmentGroupSection(
     sectionNames: Map<String, String>,
     percentOfGrade: Int,
     gradeColor: Color,
+    allBlocks: List<Block>,
     onAssignmentClick: (Block) -> Unit,
 ) {
     val progress = Progress(
         total = assignments.size,
-        completed = assignments.filter { it.isCompleted() }.size
+        completed = assignments.count { it.isAssignmentCompleted(allBlocks) }
     )
     val description = stringResource(
         id = R.string.course_completed_of,
         progress.completed,
         progress.total
     )
-    val firstUncompletedId = assignments.firstOrNull { !it.isCompleted() }?.id
+    val firstUncompletedId = assignments.firstOrNull { !it.isAssignmentCompleted(allBlocks) }?.id
     var selectedId by rememberSaveable(label) { mutableStateOf(firstUncompletedId) }
     var isCompletedShown by rememberSaveable { mutableStateOf(false) }
 
@@ -272,6 +276,7 @@ private fun AssignmentGroupSection(
                     items(assignments) { assignment ->
                         AssignmentButton(
                             assignment = assignment,
+                            allBlocks = allBlocks,
                             isSelected = assignment.id == selectedId,
                             onClick = {
                                 selectedId = assignment.id
@@ -287,6 +292,7 @@ private fun AssignmentGroupSection(
                         modifier = Modifier
                             .padding(horizontal = 24.dp),
                         assignment = assignment,
+                        allBlocks = allBlocks,
                         sectionName = sectionNames[assignment.id] ?: "",
                         onAssignmentClick = onAssignmentClick
                     )
@@ -298,6 +304,7 @@ private fun AssignmentGroupSection(
                         .padding(horizontal = 24.dp)
                         .padding(top = 12.dp),
                     assignment = assignment,
+                    allBlocks = allBlocks,
                     sectionName = sectionNames[assignment.id] ?: "",
                     onAssignmentClick = onAssignmentClick
                 )
@@ -311,21 +318,27 @@ private fun AssignmentGroupSection(
 }
 
 @Composable
-private fun AssignmentButton(assignment: Block, isSelected: Boolean, onClick: () -> Unit) {
+private fun AssignmentButton(
+    assignment: Block,
+    allBlocks: List<Block>,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+) {
     val isDuePast = assignment.due != null && assignment.due!! < Date()
+    val isCompleted = assignment.isAssignmentCompleted(allBlocks)
     val cardBorderColor = when {
         isSelected -> MaterialTheme.appColors.primary
-        assignment.isCompleted() -> MaterialTheme.appColors.successGreen
+        isCompleted -> MaterialTheme.appColors.successGreen
         isDuePast -> MaterialTheme.appColors.warning
         else -> MaterialTheme.appColors.textDark
     }
     val icon = when {
-        assignment.isCompleted() -> painterResource(id = coreR.drawable.ic_core_check)
+        isCompleted -> painterResource(id = coreR.drawable.ic_core_check)
         isDuePast -> painterResource(id = coreR.drawable.ic_core_watch_later)
         else -> null
     }
     val iconDescription = when {
-        assignment.isCompleted() -> stringResource(R.string.course_accessibility_assignment_completed)
+        isCompleted -> stringResource(R.string.course_accessibility_assignment_completed)
         isDuePast -> stringResource(R.string.course_accessibility_assignment_completed)
         else -> null
     }
@@ -334,7 +347,7 @@ private fun AssignmentButton(assignment: Block, isSelected: Boolean, onClick: ()
         else -> 1.dp
     }
     val cardBackground = when {
-        assignment.isCompleted() -> MaterialTheme.appColors.successGreen.copy(
+        isCompleted -> MaterialTheme.appColors.successGreen.copy(
             ASSIGNMENT_BUTTON_CARD_BACKGROUND_ALPHA
         )
 
@@ -410,6 +423,7 @@ private fun AssignmentButton(assignment: Block, isSelected: Boolean, onClick: ()
 private fun AssignmentDetails(
     modifier: Modifier = Modifier,
     assignment: Block,
+    allBlocks: List<Block>,
     sectionName: String,
     onAssignmentClick: (Block) -> Unit,
 ) {
@@ -418,15 +432,16 @@ private fun AssignmentDetails(
             TimeUtils.formatToDueInString(LocalContext.current, it)
         } ?: ""
     val isDuePast = assignment.due != null && assignment.due!! < Date()
-    val progress = assignment.completion.toFloat()
+    val isCompleted = assignment.isAssignmentCompleted(allBlocks)
+    val progress = assignment.assignmentCompletion(allBlocks).toFloat()
     val color = when {
-        assignment.isCompleted() -> MaterialTheme.appColors.successGreen
+        isCompleted -> MaterialTheme.appColors.successGreen
         isDuePast -> MaterialTheme.appColors.warning
         else -> MaterialTheme.appColors.assignmentCardBorder
     }
     val label = assignment.assignmentProgress?.label
     val description = when {
-        assignment.isCompleted() -> {
+        isCompleted -> {
             "$label " + stringResource(
                 R.string.course_complete_points,
                 assignment.assignmentProgress?.toPointString() ?: ""
@@ -529,7 +544,8 @@ private fun CourseContentAssignmentScreenPreview() {
                     "Homework" to listOf(CoreMocks.mockChapterBlock, CourseMocks.sequentialBlock)
                 ),
                 courseProgress = CoreMocks.mockCourseProgress,
-                sectionNames = mapOf()
+                sectionNames = mapOf(),
+                allBlocks = CoreMocks.mockBlockData,
             ),
             onAssignmentClick = {},
             onNavigateToHome = {},
@@ -563,7 +579,8 @@ private fun CourseContentAssignmentScreenTabletPreview() {
                     "Quiz" to listOf(CourseMocks.sequentialBlock)
                 ),
                 courseProgress = CoreMocks.mockCourseProgress,
-                sectionNames = mapOf()
+                sectionNames = mapOf(),
+                allBlocks = CoreMocks.mockBlockData,
             ),
             onAssignmentClick = {},
             onNavigateToHome = {},
