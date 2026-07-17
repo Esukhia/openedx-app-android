@@ -17,9 +17,11 @@ fun Block.assignmentCompletion(allBlocks: List<Block>): Double {
     if (isCompleted()) return 1.0
 
     val problems = collectDescendantBlocks(allBlocks).filter { it.type == BlockType.PROBLEM }
-    if (problems.isEmpty()) return completion
-
-    return problems.count { it.completion == 1.0 }.toDouble() / problems.size
+    return if (problems.isEmpty()) {
+        completion
+    } else {
+        problems.count { it.completion == 1.0 }.toDouble() / problems.size
+    }
 }
 
 /**
