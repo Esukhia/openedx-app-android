@@ -329,7 +329,7 @@ class AppRouter :
     override fun navigateToCertificate(fm: FragmentManager, title: String, url: String) {
         replaceFragmentWithBackStack(
             fm,
-            WebContentFragment.newInstance(title = title, url = url, authenticated = true)
+            WebContentFragment.newInstance(title = title, url = url)
         )
     }
     // endregion
