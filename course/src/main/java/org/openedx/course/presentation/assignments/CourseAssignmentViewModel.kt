@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 import org.openedx.core.domain.model.Block
 import org.openedx.core.domain.model.CourseProgress
 import org.openedx.core.domain.model.CourseStructure
-import org.openedx.core.domain.model.Progress
+import org.openedx.core.domain.model.assignmentProgress
 import org.openedx.core.system.notifier.CourseNotifier
 import org.openedx.core.system.notifier.CourseStructureUpdated
 import org.openedx.course.domain.interactor.CourseInteractor
@@ -79,16 +79,15 @@ class CourseAssignmentViewModel(
             val grouped = filteredAssignments
                 .groupBy { it.assignmentProgress?.assignmentType ?: "" }
                 .toSortedMap(compareBy { assignmentTypeOrder.indexOf(it) })
-            val completed = assignments.count { it.isCompleted() }
-            val total = assignments.size
-            val progress = Progress(completed, total)
+            val progress = assignmentProgress(courseStructure, filteredAssignments)
             val sectionName =
-                createAssignmentToChapterMapping(courseStructure.blockData, assignments)
+                createAssignmentToChapterMapping(courseStructure.blockData, filteredAssignments)
             _uiState.value = CourseAssignmentUIState.CourseData(
                 groupedAssignments = grouped,
                 courseProgress = courseProgress,
                 progress = progress,
-                sectionNames = sectionName
+                sectionNames = sectionName,
+                allBlocks = courseStructure.blockData,
             )
         }
     }

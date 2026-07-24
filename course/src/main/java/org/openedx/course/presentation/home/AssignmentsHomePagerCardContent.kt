@@ -33,6 +33,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.openedx.core.domain.model.Block
+import org.openedx.core.domain.model.isAssignmentCompleted
 import org.openedx.core.ui.theme.appColors
 import org.openedx.core.ui.theme.appTypography
 import org.openedx.core.utils.TimeUtils
@@ -64,9 +65,21 @@ fun AssignmentsHomePagerCardContent(
         return
     }
 
-    val completedAssignments = uiState.courseAssignments.count { it.isCompleted() }
-    val totalAssignments = uiState.courseAssignments.size
-    val firstIncompleteAssignment = uiState.courseAssignments.find { !it.isCompleted() }
+    val blockData = uiState.courseStructure.blockData
+    val lmsProgress = uiState.courseStructure.progress
+    val completedAssignments = if (lmsProgress != null && lmsProgress.total > 0) {
+        lmsProgress.completed
+    } else {
+        uiState.courseAssignments.count { it.isAssignmentCompleted(blockData) }
+    }
+    val totalAssignments = if (lmsProgress != null && lmsProgress.total > 0) {
+        lmsProgress.total
+    } else {
+        uiState.courseAssignments.size
+    }
+    val firstIncompleteAssignment = uiState.courseAssignments.find {
+        !it.isAssignmentCompleted(blockData)
+    }
 
     Column(
         modifier = Modifier
