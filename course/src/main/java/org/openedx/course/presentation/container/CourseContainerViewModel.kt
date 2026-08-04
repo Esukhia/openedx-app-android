@@ -7,6 +7,7 @@ import androidx.core.graphics.createBitmap
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -94,6 +95,9 @@ class CourseContainerViewModel(
     private val _isNavigationEnabled = MutableStateFlow(false)
     val isNavigationEnabled: StateFlow<Boolean> =
         _isNavigationEnabled.asStateFlow()
+
+    private var updateDataJob: Job? = null
+    private var pendingStructureRefresh = false
 
     private var _courseDetails: CourseEnrollmentDetails? = null
     val courseDetails: CourseEnrollmentDetails?
@@ -316,16 +320,26 @@ class CourseContainerViewModel(
     }
 
     fun updateData() {
-        viewModelScope.launch {
-            try {
-                interactor.getCourseStructure(courseId, isNeedRefresh = true)
-            } catch (e: Exception) {
-                _errorMessage.value = resolveErrorMessage(
-                    throwable = e,
-                )
-            }
-            _refreshing.value = false
-            courseNotifier.send(CourseStructureUpdated(courseId))
+        // A refresh already running was started before this request, so its response can
+        // miss the completion that triggered it. Queue a trailing refresh instead of
+        // launching a parallel one, which would coalesce onto that same stale fetch.
+        if (updateDataJob?.isActive == true) {
+            pendingStructureRefresh = true
+            return
+        }
+        updateDataJob = viewModelScope.launch {
+            do {
+                pendingStructureRefresh = false
+                try {
+                    interactor.getCourseStructure(courseId, isNeedRefresh = true)
+                } catch (e: Exception) {
+                    _errorMessage.value = resolveErrorMessage(
+                        throwable = e,
+                    )
+                }
+                _refreshing.value = false
+                courseNotifier.send(CourseStructureUpdated(courseId))
+            } while (pendingStructureRefresh)
         }
     }
 

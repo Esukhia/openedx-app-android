@@ -2,6 +2,7 @@ package org.openedx.course.domain.interactor
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.last
 import org.openedx.core.BlockType
 import org.openedx.core.domain.interactor.CourseInteractor
 import org.openedx.core.domain.model.Block
@@ -33,7 +34,10 @@ class CourseInteractor(
         courseId: String,
         isNeedRefresh: Boolean
     ): CourseStructure {
-        return repository.getCourseStructureFlow(courseId, isNeedRefresh).first()
+        // The flow emits cached data before the network result, so first() would
+        // cancel it before the refresh runs. When refreshing, take the final emission.
+        val flow = repository.getCourseStructureFlow(courseId, isNeedRefresh)
+        return if (isNeedRefresh) flow.last() else flow.first()
     }
 
     override suspend fun getCourseStructureFromCache(courseId: String): CourseStructure {
